@@ -76,7 +76,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
 
         self.CAMERA_WIDTH = 400
         self.CAMERA_HEIGHT = 300
-        self.SCREEN_SIZE = 224
+        self.SCREEN_SIZE = 64 # 224
         self.MAX_STEPS = 500
 
         # Random crop specifications for data augmentations
@@ -96,9 +96,10 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         self.TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
         self.VALID_GPU_IDS = [torch.cuda.device_count() - 1]
         self.TEST_GPU_IDS = [torch.cuda.device_count() - 1]
+        self.PREPROCESSORS = list()
 
         OBSERVATIONS = [
-            "rgb_resnet",
+            "rgb_custom",
             "target_coordinates_ind",
         ]
 
@@ -119,6 +120,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             ),
             include_private_scenes=False,
             renderDepthImage=False,
+            x_display=10.0
         )
 
     @classmethod
@@ -184,8 +186,8 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
                     "encoder_base": encoder_base,
                     "input_height": self.SCREEN_SIZE,
                     "input_width": self.SCREEN_SIZE,
-                    "input_uuids": [f"{model_name}_lowres"],
-                    "output_uuid": f"rgb_{model_name}",
+                    "input_uuids": ["rgb_lowres"],
+                    "output_uuid": "rgb_custom",
                     "latent_size": latent_size
                 },
             ),
@@ -228,7 +230,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
     # Model base requirements
     @classmethod
     def create_model(cls, **kwargs) -> nn.Module:
-        rgb_uuid = "rgb_resnet"
+        rgb_uuid = "rgb_custom"
         goal_sensor_uuid = "target_coordinates_ind"
 
         return ResnetTensorPointNavActorCritic(
