@@ -521,7 +521,7 @@ def main():
         TRAINING_DATASET_DIR, VALIDATION_DATASET_DIR, TEST_DATASET_DIR
     )
 
-    if args.experiment == 'objectnav_robothor_vanilla_rgb_custom_ddppo':
+    if 'custom' in args.experiment:
         if args.encoder_model is None:
             raise Exception('objectnav_robothor_vanilla_rgb_custom_ddppo should have a state model specified')
         else:

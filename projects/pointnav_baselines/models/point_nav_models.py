@@ -587,7 +587,7 @@ class ResnetTensorGoalEncoder(nn.Module):
                 nn.ReLU(),
             )
             self.target_obs_combiner = nn.Sequential(
-                nn.Linear(self.ff_size + self.class_dims, self.ff_size),
+                nn.Linear(self.ff_size + self.goal_dims, self.ff_size),
                 nn.ReLU(),
                 nn.Linear(self.ff_size, self.ff_size),
                 nn.ReLU()

@@ -349,7 +349,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             "env_args": {
                 **self.ENV_ARGS,
                 "x_display": (
-                    f"0.{devices[process_ind % len(devices)]}"
+                    f"10.{devices[process_ind % len(devices)]}"
                     if devices is not None
                     and len(devices) > 0
                     and devices[process_ind % len(devices)] >= 0
