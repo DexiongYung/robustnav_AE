@@ -622,13 +622,14 @@ class ResnetTensorGoalEncoder(nn.Module):
         return self.resnet_compressor(observations[self.resnet_uuid])
 
     def distribute_target(self, observations):
-        target_emb = self.embed_class(observations[self.goal_uuid])
-        target_emb = target_emb.squeeze()
-        return target_emb
         # target_emb = self.embed_goal(observations[self.goal_uuid])
-        # return target_emb.view(-1, self.goal_dims, 1, 1).expand(
+        # ret = target_emb.view(-1, self.goal_dims, 1, 1).expand(
         #     -1, -1, self.resnet_tensor_shape[-2], self.resnet_tensor_shape[-1]
         # )
+        # return ret
+        target_emb = self.embed_goal(observations[self.goal_uuid])
+        target_emb = target_emb.squeeze()
+        return target_emb
 
     def adapt_input(self, observations):
         resnet = observations[self.resnet_uuid]
@@ -647,7 +648,8 @@ class ResnetTensorGoalEncoder(nn.Module):
         # observations[self.goal_uuid] = observations[self.goal_uuid].view(-1, 2)
 
         observations[self.resnet_uuid] = resnet.view(-1, resnet.shape[-1])
-        observations[self.goal_uuid] = observations[self.goal_uuid].view(-1, 1)
+        observations[self.goal_uuid] = observations[self.goal_uuid].view(-1, observations[self.goal_uuid].shape[-1])
+        # observations[self.goal_uuid] = observations[self.goal_uuid].view(-1, 1)
 
         return observations, use_agent, nstep, nsampler, nagent
 

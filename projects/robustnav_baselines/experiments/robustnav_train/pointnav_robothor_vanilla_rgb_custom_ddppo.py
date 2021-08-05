@@ -195,7 +195,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         
     # DD-PPO Base
     def training_pipeline(self, **kwargs):
-        ppo_steps = int(75000000)
+        ppo_steps = int(30000000) # Previously 75 mil
         lr = 3e-4
         num_mini_batch = 1
         update_repeats = 4
@@ -349,7 +349,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             "env_args": {
                 **self.ENV_ARGS,
                 "x_display": (
-                    f"10.{devices[process_ind % len(devices)]}"
+                    f"10.0{devices[process_ind % len(devices)]}"
                     if devices is not None
                     and len(devices) > 0
                     and devices[process_ind % len(devices)] >= 0
