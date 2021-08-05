@@ -11,7 +11,7 @@ class Encoder(nn.Module):
     
     def forward(self, x):
         x1 = self.encoder(x)
-        x_flatten = x1.view(x1.size(0), -1)
+        x_flatten = x1.flatten(start_dim=1)
         return self.fc1(x_flatten)
 
 
