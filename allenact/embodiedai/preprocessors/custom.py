@@ -133,7 +133,7 @@ class CustomPreprocessor(Preprocessor):
         
         if 'AE' in self.model_name:
             return self.model(x.to(self.device))[1]
-        elif 'VAE' in self.model_name or 'LUSR' in self.model_name or 'DDVAE' in self.model_name:
+        elif 'VAE' in self.model_name or 'DDVAE' in self.model_name:
             return self.model(x.to(self.device), return_latent=True)[3]
         elif 'LUSR' in self.model_name:
             return self.model(x.to(self.device), return_latent=True)[5]

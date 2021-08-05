@@ -43,7 +43,7 @@ def backward_loss(x, model, device):
 
 # Models for carracing games
 class Encoder(nn.Module):
-    def __init__(self, class_latent_size = 8, content_latent_size = 32, input_channel = 3, flatten_size = 1024):
+    def __init__(self, class_latent_size = 16, content_latent_size = 32, input_channel = 3, flatten_size = 1024):
         super(Encoder, self).__init__()
         self.class_latent_size = class_latent_size
         self.content_latent_size = content_latent_size
@@ -57,7 +57,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x = self.main(x)
-        x = x.view(x.size(0), -1)
+        x = x.flatten(start_dim=1)
         mu = self.linear_mu(x)
         logsigma = self.linear_logsigma(x)
         classcode = self.linear_classcode(x)
@@ -86,7 +86,7 @@ class Decoder(nn.Module):
 
 # DisentangledVAE here is actually Cycle-Consistent VAE, disentangled stands for the disentanglement between domain-general and domain-specifc embeddings 
 class LUSR_64(M64):
-    def __init__(self, class_latent_size = 8, content_latent_size = 32, input_channel = 3, flatten_size = 1024):
+    def __init__(self, class_latent_size = 16, content_latent_size = 32, input_channel = 3, flatten_size = 1024):
         super(LUSR_64, self).__init__(content_latent_size, input_channel, flatten_size)
         self.encoder = Encoder(class_latent_size, content_latent_size, input_channel, flatten_size)
         self.decoder = Decoder(class_latent_size + content_latent_size, input_channel, flatten_size)
