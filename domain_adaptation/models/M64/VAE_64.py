@@ -35,6 +35,6 @@ class VAE_64(M64):
         recon_x = self.decoder(flatten_x)
 
         if return_latent:
-            return mu, sigma, recon_x, flatten_x
+            return mu, sigma, recon_x, latent
         else:
             return mu, sigma, recon_x

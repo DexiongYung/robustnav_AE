@@ -99,7 +99,7 @@ class LUSR_64(M64):
         recon_x = self.decoder(latentcode)
 
         if return_latent:
-            return mu, logsigma, classcode, latentcode, recon_x
+            return mu, logsigma, classcode, latentcode, recon_x, contentcode
         else:
             return mu, logsigma, classcode, recon_x
 
