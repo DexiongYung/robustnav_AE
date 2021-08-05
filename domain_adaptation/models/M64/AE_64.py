@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from domain_adaptation.common import *
+from domain_adaptation.models.common import *
 from domain_adaptation.models.M64.M64 import M64
 
 class Encoder(nn.Module):

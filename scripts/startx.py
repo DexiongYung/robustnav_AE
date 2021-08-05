@@ -67,7 +67,7 @@ EndSection
     return output
 
 
-def startx(display=0):
+def startx(display=10.0):
     if platform.system() != "Linux":
         raise Exception("Can only run startx on linux")
 

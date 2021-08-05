@@ -1,5 +1,12 @@
 """
-Experiment config to train a ObjectNav RGB policy
+Experiment config to evaluate a PointNav RGB policy
+
+Supports "Clean" and the following visual corruptions
+- Defocus Blur
+- Motion Blur
+- Spatter
+- Low Lighting
+- Speckle
 """
 
 # Required imports
@@ -34,35 +41,33 @@ from allenact.utils.experiment_utils import (
     LinearDecay,
 )
 
-from allenact_plugins.ithor_plugin.ithor_sensors import (
-    RGBSensorThor,
-    GoalObjectTypeThorSensor,
-)
-from allenact_plugins.ithor_plugin.ithor_util import horizontal_to_vertical_fov
+from allenact_plugins.ithor_plugin.ithor_sensors import RGBSensorThor
 from allenact_plugins.robothor_plugin.robothor_sensors import DepthSensorThor
 from allenact_plugins.robothor_plugin.robothor_sensors import GPSCompassSensorRoboThor
+from allenact_plugins.ithor_plugin.ithor_util import horizontal_to_vertical_fov
 
 from allenact_plugins.robothor_plugin.robothor_task_samplers import (
-    ObjectNavDatasetTaskSampler,
+    PointNavDatasetTaskSampler,
 )
 from allenact_plugins.robothor_plugin.robothor_tasks import ObjectNavTask
 from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask
 
+from allenact.embodiedai.preprocessors.resnet import ResNetPreprocessor
 from allenact.embodiedai.preprocessors.custom import CustomPreprocessor
 
 from allenact.algorithms.onpolicy_sync.losses import PPO
 from allenact.algorithms.onpolicy_sync.losses.ppo import PPOConfig
 
-from projects.objectnav_baselines.models.object_nav_models import (
-    ResnetTensorObjectNavActorCritic,
+from projects.pointnav_baselines.models.point_nav_models import (
+    PointNavActorCriticSimpleConvRNN,
+    ResnetTensorPointNavActorCritic,
 )
 
 from allenact.base_abstractions.sensor import DepthSensor, RGBSensor
-import ai2thor
 
 
-class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
-    """A ObjectNav Experiment Config using RGB sensors and DDPPO"""
+class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
+    """A PointNav Experiment Config using RGB sensors and DDPPO"""
 
     def __init__(self):
         super().__init__()
@@ -73,14 +78,13 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         self.STEP_SIZE = 0.25
         self.ROTATION_DEGREES = 30.0
         self.DISTANCE_TO_GOAL = 0.2
-        self.VISIBILITY_DISTANCE = 1.0
         self.STOCHASTIC = True
         self.HORIZONTAL_FIELD_OF_VIEW = 79
 
         self.CAMERA_WIDTH = 400
         self.CAMERA_HEIGHT = 300
         self.SCREEN_SIZE = 64 # 224
-        self.MAX_STEPS = 500
+        self.MAX_STEPS = 300
 
         # Random crop specifications for data augmentations
         self.CROP_WIDTH = 320
@@ -94,38 +98,15 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             "shaping_weight": 1.0,
         }
 
-
         self.NUM_PROCESSES = 60
 
         self.TRAIN_GPU_IDS = list(range(torch.cuda.device_count()))
-        self.SAMPLER_GPU_IDS = self.TRAIN_GPU_IDS
         self.VALID_GPU_IDS = [torch.cuda.device_count() - 1]
         self.TEST_GPU_IDS = [torch.cuda.device_count() - 1]
-        # Preprecessors should be empty for custom config as model is chosen and created later
-        self.PREPROCESSORS = list()
-
-        self.TARGET_TYPES = tuple(
-            sorted(
-                [
-                    "AlarmClock",
-                    "Apple",
-                    "BaseballBat",
-                    "BasketBall",
-                    "Bowl",
-                    "GarbageCan",
-                    "HousePlant",
-                    "Laptop",
-                    "Mug",
-                    "SprayBottle",
-                    "Television",
-                    "Vase",
-                ]
-            )
-        )
 
         OBSERVATIONS = [
             "rgb_custom",
-            "goal_object_type_ind",
+            "target_coordinates_ind",
         ]
 
         self.ENV_ARGS = dict(
@@ -135,7 +116,6 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             applyActionNoise=self.STOCHASTIC,
             agentType="stochastic",
             rotateStepDegrees=self.ROTATION_DEGREES,
-            visibilityDistance=self.VISIBILITY_DISTANCE,
             gridSize=self.STEP_SIZE,
             snapToGrid=False,
             agentMode="locobot",
@@ -146,33 +126,51 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             ),
             include_private_scenes=False,
             renderDepthImage=False,
-            x_display="10.0",
         )
 
     @classmethod
     def tag(cls):
-        return "Objectnav-RoboTHOR-Vanilla-RGB-ResNet-custom-DDPPO"
+        return "Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO"
+    
+    def create_preprocessor(self, model_name, ckpt_path, encoder_base, latent_size):
+        self.model_name = model_name
+        self.latent_size = latent_size
+        self.PREPROCESSORS = [
+            Builder(
+                CustomPreprocessor,
+                {
+                    "model_name": model_name,
+                    "ckpt_path": ckpt_path,
+                    "encoder_base": encoder_base,
+                    "input_height": self.SCREEN_SIZE,
+                    "input_width": self.SCREEN_SIZE,
+                    "input_uuids": ["rgb_lowres"],
+                    "output_uuid": "rgb_custom",
+                    "latent_size": latent_size
+                },
+            ),
+        ]
 
     def monkey_patch_datasets(self, train_dataset, val_dataset, test_dataset):
         if train_dataset is not None:
             self.TRAIN_DATASET_DIR = os.path.join(os.getcwd(), train_dataset)
         else:
             self.TRAIN_DATASET_DIR = os.path.join(
-                os.getcwd(), "subsamples/robothor-objectnav/train"
+                os.getcwd(), "datasets/robothor-pointnav/train"
             )
 
         if val_dataset is not None:
             self.VAL_DATASET_DIR = os.path.join(os.getcwd(), val_dataset)
         else:
             self.VAL_DATASET_DIR = os.path.join(
-                os.getcwd(), "datasets/robothor-objectnav/robustnav_eval"
+                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
             )
 
         if test_dataset is not None:
             self.TEST_DATASET_DIR = os.path.join(os.getcwd(), test_dataset)
         else:
             self.TEST_DATASET_DIR = os.path.join(
-                os.getcwd(), "datasets/robothor-objectnav/robustnav_eval"
+                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
             )
 
     def monkey_patch_sensor(
@@ -197,19 +195,17 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
                 crop_width=self.CROP_WIDTH,
                 color_jitter=color_jitter,
             ),
-            GoalObjectTypeThorSensor(object_types=self.TARGET_TYPES,),
+            GPSCompassSensorRoboThor(),
         ]
 
     # DD-PPO Base
     def training_pipeline(self, **kwargs):
-        ppo_steps = int(50000000) # Previously 300 mil
+        ppo_steps = int(75000000)
         lr = 3e-4
         num_mini_batch = 1
         update_repeats = 4
         num_steps = 128
-        # Save every step
         save_interval = 5000000
-        # How many steps before logging on TensorBoard
         log_interval = 10000 if torch.cuda.is_available() else 1
         gamma = 0.99
         use_gae = True
@@ -236,37 +232,20 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             ),
         )
 
-    def create_model(self, **kwargs) -> nn.Module:
+    # Model base requirements
+    @classmethod
+    def create_model(cls, **kwargs) -> nn.Module:
         rgb_uuid = "rgb_custom"
-        goal_sensor_uuid = "goal_object_type_ind"
+        goal_sensor_uuid = "target_coordinates_ind"
 
-        return ResnetTensorObjectNavActorCritic(
-            action_space=gym.spaces.Discrete(len(ObjectNavTask.class_action_names())),
+        return ResnetTensorPointNavActorCritic(
+            action_space=gym.spaces.Discrete(len(PointNavTask.class_action_names())),
             observation_space=kwargs["sensor_preprocessor_graph"].observation_spaces,
             goal_sensor_uuid=goal_sensor_uuid,
             rgb_resnet_preprocessor_uuid=rgb_uuid,
             hidden_size=512,
             goal_dims=32,
         )
-    
-    def create_preprocessor(self, model_name, ckpt_path, encoder_base, latent_size):
-        self.model_name = model_name
-        self.latent_size = latent_size
-        self.PREPROCESSORS = [
-            Builder(
-                CustomPreprocessor,
-                {
-                    "model_name": model_name,
-                    "ckpt_path": ckpt_path,
-                    "encoder_base": encoder_base,
-                    "input_height": self.SCREEN_SIZE,
-                    "input_width": self.SCREEN_SIZE,
-                    "input_uuids": ["rgb_lowres"],
-                    "output_uuid": "rgb_custom",
-                    "latent_size": latent_size
-                },
-            ),
-        ]
 
     def machine_params(self, mode="train", **kwargs):
         sampler_devices: Sequence[int] = []
@@ -282,23 +261,19 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
                 if not torch.cuda.is_available()
                 else evenly_distribute_count_into_bins(self.NUM_PROCESSES, len(gpu_ids))
             )
-            sampler_devices = self.SAMPLER_GPU_IDS
+            sampler_devices = self.TRAIN_GPU_IDS
         elif mode == "valid":
-            nprocesses = 1
+            nprocesses = 1 if torch.cuda.is_available() else 0
             gpu_ids = [] if not torch.cuda.is_available() else self.VALID_GPU_IDS
         elif mode == "test":
-            nprocesses = 15 if torch.cuda.is_available() else 1
+            nprocesses = 15
             gpu_ids = [] if not torch.cuda.is_available() else self.TEST_GPU_IDS
         else:
             raise NotImplementedError("mode must be 'train', 'valid', or 'test'.")
 
-        sensors = [*self.SENSORS]
-        if mode != "train":
-            sensors = [s for s in sensors if not isinstance(s, ExpertActionSensor)]
-
         sensor_preprocessor_graph = (
             SensorPreprocessorGraph(
-                source_observation_spaces=SensorSuite(sensors).observation_spaces,
+                source_observation_spaces=SensorSuite(self.SENSORS).observation_spaces,
                 preprocessors=self.PREPROCESSORS,
             )
             if mode == "train"
@@ -320,7 +295,7 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
 
     @classmethod
     def make_sampler_fn(cls, **kwargs) -> TaskSampler:
-        return ObjectNavDatasetTaskSampler(**kwargs)
+        return PointNavDatasetTaskSampler(**kwargs)
 
     @staticmethod
     def _partition_inds(n: int, num_parts: int):
@@ -337,7 +312,6 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         seeds: Optional[List[int]],
         deterministic_cudnn: bool,
         include_expert_sensor: bool = True,
-        allow_oversample: bool = False,
     ) -> Dict[str, Any]:
         path = os.path.join(scenes_dir, "*.json.gz")
         scenes = [scene.split("/")[-1].split(".")[0] for scene in glob.glob(path)]
@@ -356,12 +330,6 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             " You can avoid this by setting a number of workers divisible by the number of scenes"
         )
         if total_processes > len(scenes):  # oversample some scenes -> bias
-            if not allow_oversample:
-                raise RuntimeError(
-                    f"Cannot have `total_processes > len(scenes)`"
-                    f" ({total_processes} > {len(scenes)}) when `allow_oversample` is `False`."
-                )
-
             if total_processes % len(scenes) != 0:
                 get_logger().warning(oversample_warning)
             scenes = scenes * int(ceil(total_processes / len(scenes)))
@@ -373,23 +341,20 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
 
         return {
             "scenes": scenes[inds[process_ind] : inds[process_ind + 1]],
-            "object_types": self.TARGET_TYPES,
             "max_steps": self.MAX_STEPS,
             "sensors": [
                 s
                 for s in self.SENSORS
                 if (include_expert_sensor or not isinstance(s, ExpertActionSensor))
             ],
-            "action_space": gym.spaces.Discrete(
-                len(ObjectNavTask.class_action_names())
-            ),
+            "action_space": gym.spaces.Discrete(len(PointNavTask.class_action_names())),
             "seed": seeds[process_ind] if seeds is not None else None,
             "deterministic_cudnn": deterministic_cudnn,
             "rewards_config": self.REWARD_CONFIG,
             "env_args": {
                 **self.ENV_ARGS,
                 "x_display": (
-                    f"0.{devices[process_ind % len(devices)]}"
+                    f"10.{devices[process_ind % len(devices)]}"
                     if devices is not None
                     and len(devices) > 0
                     and devices[process_ind % len(devices)] >= 0
@@ -407,13 +372,12 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         deterministic_cudnn: bool = False,
     ) -> Dict[str, Any]:
         res = self._get_sampler_args_for_scene_split(
-            scenes_dir=os.path.join(self.TRAIN_DATASET_DIR, "episodes"),
-            process_ind=process_ind,
-            total_processes=total_processes,
+            os.path.join(self.TRAIN_DATASET_DIR, "episodes"),
+            process_ind,
+            total_processes,
             devices=devices,
             seeds=seeds,
             deterministic_cudnn=deterministic_cudnn,
-            allow_oversample=True,
         )
         res["scene_directory"] = self.TRAIN_DATASET_DIR
         res["loop_dataset"] = True
@@ -429,14 +393,13 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         deterministic_cudnn: bool = False,
     ) -> Dict[str, Any]:
         res = self._get_sampler_args_for_scene_split(
-            scenes_dir=os.path.join(self.VAL_DATASET_DIR, "episodes"),
-            process_ind=process_ind,
-            total_processes=total_processes,
+            os.path.join(self.VAL_DATASET_DIR, "episodes"),
+            process_ind,
+            total_processes,
             devices=devices,
             seeds=seeds,
             deterministic_cudnn=deterministic_cudnn,
             include_expert_sensor=False,
-            allow_oversample=False,
         )
         res["scene_directory"] = self.VAL_DATASET_DIR
         res["loop_dataset"] = False
@@ -458,7 +421,6 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             seeds=seeds,
             deterministic_cudnn=deterministic_cudnn,
             include_expert_sensor=False,
-            allow_oversample=False,
         )
         res["scene_directory"] = self.TEST_DATASET_DIR
         res["loop_dataset"] = False
