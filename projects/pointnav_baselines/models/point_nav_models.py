@@ -400,6 +400,7 @@ class ResnetTensorPointNavActorCritic(ActorCriticModel[CategoricalDistr]):
         prev_actions: torch.Tensor,
         masks: torch.FloatTensor,
     ) -> Tuple[ActorCriticOutput[DistributionType], Optional[Memory]]:
+        # TODO!!!: Visual processor should be here, preprocesser should be identity
         x = self.goal_visual_encoder(observations)
         x, rnn_hidden_states = self.state_encoder(
             x, memory.tensor(self.memory_key), masks
@@ -670,6 +671,11 @@ class ResnetTensorGoalEncoder(nn.Module):
             self.compress_resnet(observations),
             self.distribute_target(observations),
         ]
+        
+        # TODO this is a not very good hack
+        if len(embs[1].shape) == 1:
+            embs[1] = embs[1].reshape(embs[0].shape)
+
         x = self.target_obs_combiner(torch.cat(embs, dim=1,))
         x = x.reshape(x.size(0), -1)  # flatten
 

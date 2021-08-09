@@ -4,18 +4,20 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-o", "storage/robothor-pointnav-rgb-custom-ddppo",
-            "-b", "projects/robustnav_baselines/experiments/robustnav_train", "pointnav_robothor_vanilla_rgb_custom_ddppo",
-            "-s", "12345", "-et", "custom", "-em", "VAE_64", "-emb", "domain_adaptation/models/M64", "-las", "64", "-sckpt", "./domain_adaptation/checkpoints/VAE/weather/best_model.pt"]
+            "args": ["-o", "storage/ddvae_eval",
+            "-b", "projects/robustnav_baselines/experiments/robustnav_eval", "pointnav_robothor_vanilla_rgb_custom_ddppo",
+            "-s", "12345", "-et", "custom", "-em", "VAE_64", "-emb", "domain_adaptation/models/M64", "-las", "64", "-sckpt", "./domain_adaptation/checkpoints/DDVAE/weather/best_model.pt",
+            "-c", "./storage/ddvae/checkpoints/Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO/custom/2021-08-06_18-15-19/exp_Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO_custom__stage_00__steps_000030005760.pt",
+            "-t", "2021-08-06_18-15-19"]
         }
     ]
 }
 
 // python main.py -o=storage/robothor-objectnav-rgb-custom-ddppo -b=projects/robustnav_baselines/experiments/robustnav_train objectnav_robothor_vanilla_rgb_custom_ddppo -s=12345 -et=custom -em=VAE_64 -emb=domain_adaptation/models/M64 -las=64 -sckpt=./domain_adaptation/checkpoints/VAE/weather/best_model.pt
+// python main.py -o=storage/ddvae_eval -b=projects/robustnav_baselines/experiments/robustnav_eval pointnav_robothor_vanilla_rgb_custom_ddppo -s=12345 -et=custom -em=VAE_64 -emb=domain_adaptation/models/M64 -las=64 -sckpt=./domain_adaptation/checkpoints/DDVAE/weather/best_model.pt -c=./storage/ddvae/checkpoints/Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO/custom/2021-08-06_18-15-19/exp_Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO_custom__stage_00__steps_000030005760.pt -t=2021-08-06_18-15-19
