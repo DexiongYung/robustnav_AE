@@ -96,6 +96,7 @@ class CustomPreprocessor(Preprocessor):
         self.model = load_model(model_name, encoder_base)(content_latent_size = latent_size)
         self.model_name = model_name
         self.shape = (1, latent_size)
+        self.is_pretrained = ckpt_path is not None
 
         self.device = torch.device("cpu") if device is None else device
         self.device_ids = device_ids or cast(

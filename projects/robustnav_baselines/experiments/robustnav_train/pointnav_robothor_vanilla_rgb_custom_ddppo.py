@@ -45,7 +45,7 @@ from allenact_plugins.robothor_plugin.robothor_task_samplers import (
 from allenact_plugins.robothor_plugin.robothor_tasks import ObjectNavTask
 from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask
 
-from allenact.embodiedai.preprocessors.resnet import ResNetPreprocessor
+from allenact.embodiedai.preprocessors.identity import IdentityPreprocessor
 from allenact.embodiedai.preprocessors.custom import CustomPreprocessor
 
 from allenact.algorithms.onpolicy_sync.losses import PPO
@@ -177,21 +177,36 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
     def create_preprocessor(self, model_name, ckpt_path, encoder_base, latent_size):
         self.model_name = model_name
         self.latent_size = latent_size
-        self.PREPROCESSORS = [
-            Builder(
-                CustomPreprocessor,
-                {
-                    "model_name": model_name,
-                    "ckpt_path": ckpt_path,
-                    "encoder_base": encoder_base,
-                    "input_height": self.SCREEN_SIZE,
-                    "input_width": self.SCREEN_SIZE,
-                    "input_uuids": ["rgb_lowres"],
-                    "output_uuid": "rgb_custom",
-                    "latent_size": latent_size
-                },
-            ),
-        ]
+        self.is_pretrained = ckpt_path is not None
+        self.encoder_base = encoder_base
+        if ckpt_path is not None:
+            self.PREPROCESSORS = [
+                Builder(
+                    CustomPreprocessor,
+                    {
+                        "model_name": model_name,
+                        "ckpt_path": ckpt_path,
+                        "encoder_base": encoder_base,
+                        "input_height": self.SCREEN_SIZE,
+                        "input_width": self.SCREEN_SIZE,
+                        "input_uuids": ["rgb_lowres"],
+                        "output_uuid": "rgb_custom",
+                        "latent_size": latent_size
+                    },
+                ),
+            ]
+        else:
+            self.PREPROCESSORS = [
+                Builder(
+                    IdentityPreprocessor,
+                    {
+                        "input_height": self.SCREEN_SIZE,
+                        "input_width": self.SCREEN_SIZE,
+                        "input_uuids": ["rgb_lowres"],
+                        "output_uuid": "rgb_custom"
+                    },   
+                )
+            ]
         
     # DD-PPO Base
     def training_pipeline(self, **kwargs):
@@ -228,8 +243,7 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         )
 
     # Model base requirements
-    @classmethod
-    def create_model(cls, **kwargs) -> nn.Module:
+    def create_model(self, **kwargs):
         rgb_uuid = "rgb_custom"
         goal_sensor_uuid = "target_coordinates_ind"
 
@@ -240,6 +254,10 @@ class PointNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
             rgb_resnet_preprocessor_uuid=rgb_uuid,
             hidden_size=512,
             goal_dims=32,
+            is_pretrained=self.is_pretrained,
+            encoder_base = self.encoder_base,
+            model_name = self.model_name,
+            latent_size = self.latent_size
         )
 
     def machine_params(self, mode="train", **kwargs):

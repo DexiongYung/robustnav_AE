@@ -18,7 +18,6 @@ class IdentityPreprocessor(Preprocessor):
 
     def __init__(
         self,
-        latent_size: int,
         input_uuids: List[str],
         output_uuid: str,
         input_height: int,
@@ -36,13 +35,16 @@ class IdentityPreprocessor(Preprocessor):
 
         self.input_height = input_height
         self.input_width = input_width
-        self.shape = (1, latent_size)
+        self.shape = (input_width, input_height)
 
         self.device = torch.device("cpu") if device is None else device
         self.device_ids = device_ids or cast(
             List[torch.device], list(range(torch.cuda.device_count()))
         )
 
+        self.identity_model = nn.Sequential(nn.Identity())
+        self.model = self.identity_model.to(self.device)
+        
         low = -np.inf
         high = np.inf
 
@@ -55,7 +57,9 @@ class IdentityPreprocessor(Preprocessor):
         super().__init__(**prepare_locals_for_super(locals()))
 
     def to(self, device: torch.device) -> str:
-        pass
+        self.model = self.model.to(device)
+        self.device = device
+        return self
 
     def process(self, obs: Dict[str, Any], *args: Any, **kwargs: Any) -> Any:
         # print(obs)
@@ -64,4 +68,4 @@ class IdentityPreprocessor(Preprocessor):
         if x.shape[1] == 1:
             x = x.repeat(1, 3, 1, 1)
         
-        return x
+        return self.model(x.to(self.device))
