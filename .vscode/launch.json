@@ -10,15 +10,12 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-<<<<<<< HEAD
-            "args": ["-o", "storage/ddvae_eval",
-            "-b", "projects/robustnav_baselines/experiments/robustnav_eval", "pointnav_robothor_vanilla_rgb_custom_ddppo",
-            "-s", "12345", "-et", "custom", "-em", "LUSR_64", "-emb", "domain_adaptation/models/M64", "-las", "64", "-sckpt", "./domain_adaptation/checkpoints/LUSR/weather/best_model.pt"]
-=======
+            // "args": ["-o", "storage/ddvae_eval",
+            // "-b", "projects/robustnav_baselines/experiments/robustnav_eval", "pointnav_robothor_vanilla_rgb_custom_ddppo",
+            // "-s", "12345", "-et", "custom", "-em", "LUSR_64", "-emb", "domain_adaptation/models/M64", "-las", "64", "-sckpt", "./domain_adaptation/checkpoints/LUSR/weather/best_model.pt"]
             "args": ["-o", "storage/test",
             "-b", "projects/robustnav_baselines/experiments/robustnav_train", "pointnav_robothor_vanilla_rgb_custom_ddppo",
             "-s", "12345", "-et", "custom", "-em", "AE_64", "-emb", "domain_adaptation/models/M64", "-las", "64"]
->>>>>>> cef2561a00a63a0ad4696c0cb484700d6872b8db
         }
     ]
 }
