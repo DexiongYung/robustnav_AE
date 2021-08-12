@@ -10,11 +10,9 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["-o", "storage/ddvae_eval",
-            "-b", "projects/robustnav_baselines/experiments/robustnav_eval", "pointnav_robothor_vanilla_rgb_custom_ddppo",
-            "-s", "12345", "-et", "custom", "-em", "VAE_64", "-emb", "domain_adaptation/models/M64", "-las", "64", "-sckpt", "./domain_adaptation/checkpoints/DDVAE/weather/best_model.pt",
-            "-c", "./storage/ddvae/checkpoints/Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO/custom/2021-08-06_18-15-19/exp_Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO_custom__stage_00__steps_000030005760.pt",
-            "-t", "2021-08-06_18-15-19"]
+            "args": ["-o", "storage/test",
+            "-b", "projects/robustnav_baselines/experiments/robustnav_train", "pointnav_robothor_vanilla_rgb_custom_ddppo",
+            "-s", "12345", "-et", "custom", "-em", "AE_64", "-emb", "domain_adaptation/models/M64", "-las", "64"]
         }
     ]
 }

@@ -15,6 +15,7 @@ from allenact.algorithms.onpolicy_sync.policy import (
 from allenact.base_abstractions.distributions import CategoricalDistr
 from allenact.base_abstractions.misc import ActorCriticOutput, Memory
 from allenact.embodiedai.models.basic_models import SimpleCNN, RNNStateEncoder
+from allenact.embodiedai.preprocessors.custom import load_model
 
 
 class PointNavActorCriticSimpleConvRNN(ActorCriticModel[CategoricalDistr]):
@@ -323,11 +324,23 @@ class ResnetTensorPointNavActorCritic(ActorCriticModel[CategoricalDistr]):
         goal_dims: int = 32,
         resnet_compressor_hidden_out_dims: Tuple[int, int] = (128, 32),
         combiner_hidden_out_dims: Tuple[int, int] = (128, 32),
+        is_pretrained: bool = False,
+        encoder_base = None,
+        model_name = None,
+        latent_size = None
     ):
 
         super().__init__(
             action_space=action_space, observation_space=observation_space,
         )
+        self.pretrained = is_pretrained
+        if not is_pretrained:
+            if model_name is None or encoder_base is None:
+                raise ValueError('Model name and encoder base cannot be none')
+            elif 'AE' not in model_name:
+                raise ValueError('Model is not vanilla AutoEncoder, code only works for vanilla')
+            self.visual_encoder = load_model(model_name, encoder_base)(content_latent_size = latent_size)
+            self.visual_encoder = self.visual_encoder.encoder
 
         self._hidden_size = hidden_size
         if (
@@ -400,7 +413,12 @@ class ResnetTensorPointNavActorCritic(ActorCriticModel[CategoricalDistr]):
         prev_actions: torch.Tensor,
         masks: torch.FloatTensor,
     ) -> Tuple[ActorCriticOutput[DistributionType], Optional[Memory]]:
-        # TODO!!!: Visual processor should be here, preprocesser should be identity
+        if not self.pretrained:
+            obs_shape = observations['rgb_custom'].shape
+            observations['rgb_custom'] = observations['rgb_custom'].reshape(-1, *obs_shape[-3:])
+            observations['rgb_custom'] = self.visual_encoder(observations['rgb_custom'])
+            observations['rgb_custom'] = observations['rgb_custom'].reshape(*obs_shape[:2], *observations['rgb_custom'].shape[-1:])
+        
         x = self.goal_visual_encoder(observations)
         x, rnn_hidden_states = self.state_encoder(
             x, memory.tensor(self.memory_key), masks
