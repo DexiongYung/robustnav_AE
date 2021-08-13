@@ -1,12 +1,8 @@
 """
 Experiment config to evaluate a PointNav RGB policy
 
-Supports "Clean" and the following visual corruptions
-- Defocus Blur
-- Motion Blur
-- Spatter
-- Low Lighting
-- Speckle
+Supports the following visual corruptions
+- FOV
 """
 
 # Required imports
@@ -53,6 +49,7 @@ from allenact_plugins.robothor_plugin.robothor_tasks import ObjectNavTask
 from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask
 
 from allenact.embodiedai.preprocessors.custom import CustomPreprocessor
+from allenact.embodiedai.preprocessors.identity import IdentityPreprocessor
 
 from allenact.algorithms.onpolicy_sync.losses import PPO
 from allenact.algorithms.onpolicy_sync.losses.ppo import PPOConfig
@@ -78,11 +75,11 @@ class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
         self.ROTATION_DEGREES = 30.0
         self.DISTANCE_TO_GOAL = 0.2
         self.STOCHASTIC = True
-        self.HORIZONTAL_FIELD_OF_VIEW = 79
+        self.HORIZONTAL_FIELD_OF_VIEW = 39.5
 
         self.CAMERA_WIDTH = 400
         self.CAMERA_HEIGHT = 300
-        self.SCREEN_SIZE = 64 # 224
+        self.SCREEN_SIZE = 64
         self.MAX_STEPS = 300
 
         # Random crop specifications for data augmentations
@@ -104,7 +101,8 @@ class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
         self.TEST_GPU_IDS = [torch.cuda.device_count() - 1]
 
         OBSERVATIONS = [
-            "rgb_custom",
+            "rgb_resnet",
+            # "depth_resnet",
             "target_coordinates_ind",
         ]
 
@@ -130,6 +128,28 @@ class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
     @classmethod
     def tag(cls):
         return "Pointnav-RoboTHOR-Vanilla-RGB-ResNet-DDPPO"
+
+    def monkey_patch_datasets(self, train_dataset, val_dataset, test_dataset):
+        if train_dataset is not None:
+            self.TRAIN_DATASET_DIR = os.path.join(os.getcwd(), train_dataset)
+        else:
+            self.TRAIN_DATASET_DIR = os.path.join(
+                os.getcwd(), "datasets/robothor-pointnav/train"
+            )
+
+        if val_dataset is not None:
+            self.VAL_DATASET_DIR = os.path.join(os.getcwd(), val_dataset)
+        else:
+            self.VAL_DATASET_DIR = os.path.join(
+                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
+            )
+
+        if test_dataset is not None:
+            self.TEST_DATASET_DIR = os.path.join(os.getcwd(), test_dataset)
+        else:
+            self.TEST_DATASET_DIR = os.path.join(
+                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
+            )
     
     def create_preprocessor(self, model_name, ckpt_path, encoder_base, latent_size):
         self.model_name = model_name
@@ -164,28 +184,6 @@ class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
                     },   
                 )
             ]
-
-    def monkey_patch_datasets(self, train_dataset, val_dataset, test_dataset):
-        if train_dataset is not None:
-            self.TRAIN_DATASET_DIR = os.path.join(os.getcwd(), train_dataset)
-        else:
-            self.TRAIN_DATASET_DIR = os.path.join(
-                os.getcwd(), "datasets/robothor-pointnav/train"
-            )
-
-        if val_dataset is not None:
-            self.VAL_DATASET_DIR = os.path.join(os.getcwd(), val_dataset)
-        else:
-            self.VAL_DATASET_DIR = os.path.join(
-                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
-            )
-
-        if test_dataset is not None:
-            self.TEST_DATASET_DIR = os.path.join(os.getcwd(), test_dataset)
-        else:
-            self.TEST_DATASET_DIR = os.path.join(
-                os.getcwd(), "datasets/robothor-pointnav/robustnav_eval"
-            )
 
     def monkey_patch_sensor(
         self,
@@ -249,6 +247,7 @@ class PointNavS2SRGBResNetDDPPO(ExperimentConfig, ABC):
     # Model base requirements
     def create_model(self, **kwargs) -> nn.Module:
         rgb_uuid = "rgb_custom"
+        # depth_uuid = "depth_resnet"
         goal_sensor_uuid = "target_coordinates_ind"
 
         return ResnetTensorPointNavActorCritic(
