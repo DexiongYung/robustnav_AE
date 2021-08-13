@@ -6,7 +6,7 @@ from os.path import isfile, join
 
 
 model_list = ['VAE', 'DDVAE', 'DVAE']
-corruption_list = ['Defocus_Blur', 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise']
+corruption_list = ['Defocus_Blur', 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise', 'cam_crack', 'fov']
 path = './storage'
 
 for model in model_list:
