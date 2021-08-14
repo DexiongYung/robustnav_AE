@@ -49,6 +49,7 @@ from allenact_plugins.robothor_plugin.robothor_tasks import ObjectNavTask
 from allenact_plugins.robothor_plugin.robothor_tasks import PointNavTask
 
 from allenact.embodiedai.preprocessors.custom import CustomPreprocessor
+from allenact.embodiedai.preprocessors.identity import IdentityPreprocessor
 
 from allenact.algorithms.onpolicy_sync.losses import PPO
 from allenact.algorithms.onpolicy_sync.losses.ppo import PPOConfig
