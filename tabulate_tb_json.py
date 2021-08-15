@@ -5,16 +5,17 @@ from os import listdir
 from os.path import isfile, join
 
 
-model_list = ['NoPretrain'] # ['VAE', 'DDVAE', 'DVAE']
-corruption_list = ['Defocus_Blur'] #, 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise', 'cam_crack', 'fov']
+model_list = ['VAE', 'DVAE', 'DDVAE'] # ['NoPretrain']
+corruption_list = ['Speckle_Noise'] # ['Defocus_Blur', 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise', 'cam_crack', 'fov']
 levels = [1, 3, 5]
 path = './storage'
 
-for model in model_list:
-    model_name_len = len(model)
-    model_dist, model_ep, model_reward, model_spl, model_success = list(), list(), list(), list(), list()
-    for corruption in corruption_list:
-        for l in levels:
+for corruption in corruption_list:
+    for l in levels:
+        print(f'Corruption: {corruption}, Level: {l}')
+        for model in model_list:
+            model_name_len = len(model)
+            model_dist, model_ep, model_reward, model_spl, model_success = list(), list(), list(), list(), list()
             json_files = list()
             folders = list()
             dir_list = [x for x in os.listdir(path)]
@@ -71,13 +72,14 @@ for model in model_list:
             # model_spl.append(avg_spl)
             # model_success.append(avg_success)
             
-            print(f'Model: {model}, Corruption: {corruption}, Level: {l}')
-            print(f'Dist to target: {avg_dist}+-{sd_dist}')
-            print(f'Ep Len: {avg_ep}+-{sd_ep}')
-            print(f'Reward: {avg_reward}+-{sd_reward}')
-            print(f'SPL: {avg_spl}+-{sd_spl}')
-            print(f'Succeed: {avg_success}+-{sd_success}')
-            print(f'{avg_dist}$\pm${sd_dist}&{avg_ep}$\pm${sd_ep}&{avg_reward}$\pm${sd_reward}&{avg_spl}$\pm${sd_spl}&{avg_success}$\pm${sd_success}')
+            # print(f'Model: {model}, Corruption: {corruption}, Level: {l}')
+            # print(f'Dist to target: {avg_dist}+-{sd_dist}')
+            # print(f'Ep Len: {avg_ep}+-{sd_ep}')
+            # print(f'Reward: {avg_reward}+-{sd_reward}')
+            # print(f'SPL: {avg_spl}+-{sd_spl}')
+            # print(f'Succeed: {avg_success}+-{sd_success}')
+            print(f'&{model}&{avg_dist}&{avg_ep}&{avg_reward}&{avg_spl}&{avg_success}\\\\')
+        print('\hline')
     
     # all_dist = round(np.mean(model_dist), 3)
     # all_ep = round(np.mean(model_ep), 3)
