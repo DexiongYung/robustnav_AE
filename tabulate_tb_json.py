@@ -6,8 +6,8 @@ from os.path import isfile, join
 
 
 model_list = ['NoPretrain'] # ['VAE', 'DDVAE', 'DVAE']
-corruption_list = ['Defocus_Blur'] #, 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise', 'cam_crack', 'fov']
-levels = [1, 3, 5]
+corruption_list = ['eval'] # ['Defocus_Blur' 'Motion_Blur', 'Spatter', 'Low_Lighting', 'Speckle_Noise', 'cam_crack', 'fov']
+levels = ['']
 path = './storage'
 
 for model in model_list:
@@ -71,14 +71,15 @@ for model in model_list:
             # model_spl.append(avg_spl)
             # model_success.append(avg_success)
             
-            print(f'Model: {model}, Corruption: {corruption}, Level: {l}')
-            print(f'Dist to target: {avg_dist}+-{sd_dist}')
-            print(f'Ep Len: {avg_ep}+-{sd_ep}')
-            print(f'Reward: {avg_reward}+-{sd_reward}')
-            print(f'SPL: {avg_spl}+-{sd_spl}')
-            print(f'Succeed: {avg_success}+-{sd_success}')
-            print(f'{avg_dist}$\pm${sd_dist}&{avg_ep}$\pm${sd_ep}&{avg_reward}$\pm${sd_reward}&{avg_spl}$\pm${sd_spl}&{avg_success}$\pm${sd_success}')
-    
+            # print(f'Model: {model}, Corruption: {corruption}, Level: {l}')
+            # print(f'Dist to target: {avg_dist}+-{sd_dist}')
+            # print(f'Ep Len: {avg_ep}+-{sd_ep}')
+            # print(f'Reward: {avg_reward}+-{sd_reward}')
+            # print(f'SPL: {avg_spl}+-{sd_spl}')
+            # print(f'Succeed: {avg_success}+-{sd_success}')
+            # print(f'{avg_dist}$\pm${sd_dist}&{avg_ep}$\pm${sd_ep}&{avg_reward}$\pm${sd_reward}&{avg_spl}$\pm${sd_spl}&{avg_success}$\pm${sd_success}')
+            print(f'{avg_dist}&{avg_ep}&{avg_reward}&{avg_spl}&{avg_success}')
+
     # all_dist = round(np.mean(model_dist), 3)
     # all_ep = round(np.mean(model_ep), 3)
     # all_reward = round(np.mean(model_reward), 3)
