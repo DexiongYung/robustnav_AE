@@ -78,8 +78,8 @@ class ObjectNavS2SRGBCustomDDPPO(ExperimentConfig, ABC):
         self.STOCHASTIC = True
         self.HORIZONTAL_FIELD_OF_VIEW = 79
 
-        self.CAMERA_WIDTH = 400
-        self.CAMERA_HEIGHT = 300
+        self.CAMERA_WIDTH = 64 # 400
+        self.CAMERA_HEIGHT = 64 # 300
         self.SCREEN_SIZE = 64 # 224
         self.MAX_STEPS = 500
 

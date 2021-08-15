@@ -78,9 +78,15 @@ for corruption in corruption_list:
             # print(f'Reward: {avg_reward}+-{sd_reward}')
             # print(f'SPL: {avg_spl}+-{sd_spl}')
             # print(f'Succeed: {avg_success}+-{sd_success}')
+<<<<<<< HEAD
             print(f'&{model}&{avg_dist}&{avg_ep}&{avg_reward}&{avg_spl}&{avg_success}\\\\')
         print('\hline')
     
+=======
+            # print(f'{avg_dist}$\pm${sd_dist}&{avg_ep}$\pm${sd_ep}&{avg_reward}$\pm${sd_reward}&{avg_spl}$\pm${sd_spl}&{avg_success}$\pm${sd_success}')
+            print(f'{avg_dist}&{avg_ep}&{avg_reward}&{avg_spl}&{avg_success}')
+
+>>>>>>> 6a03423b431d634327d4ddaa5015fab0dccfd141
     # all_dist = round(np.mean(model_dist), 3)
     # all_ep = round(np.mean(model_ep), 3)
     # all_reward = round(np.mean(model_reward), 3)

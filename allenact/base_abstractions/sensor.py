@@ -486,6 +486,7 @@ class VisionSensor(Sensor[EnvType, SubTaskType]):
         )
 
         # Apply a sequence of corruptions to the RGB frames
+        # TODO!!! Apply Other Hendryks noises
         if self._corruptions is not None:
             im = degradations.apply_corruption_sequence(
                 np.array(im), self._corruptions, self._severities
@@ -535,10 +536,10 @@ class VisionSensor(Sensor[EnvType, SubTaskType]):
                 if self.scaler is not None and shape_condition:
                     rot_im = np.array(self.scaler(rot_im), dtype=np.uint8)  # hwc
 
-        # Original
-        if self._scale_first:
-            if self.scaler is not None and im.shape[:2] != (self._height, self._width):
-                im = np.array(self.scaler(self.to_pil(im)), dtype=im.dtype)  # hwc
+        # # Original
+        # if self._scale_first:
+        #     if self.scaler is not None and im.shape[:2] != (self._height, self._width):
+        #         im = np.array(self.scaler(self.to_pil(im)), dtype=im.dtype)  # hwc
 
         assert im.dtype in [np.uint8, np.float32]
 
